@@ -4,14 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/olekukonko/tablewriter"
 )
 
 func helloFunc() {
 	var valik string
 	praeguneAeg := time.Now().Format("15:04:05")
+
 	fmt.Println("Teretulemast, minu harjumuste jälgiasse!")
 	fmt.Println("Kell on", praeguneAeg)
 	fmt.Println("******************************")
@@ -25,6 +28,8 @@ func helloFunc() {
 	fmt.Println("******************************")
 	fmt.Print("Vali tegevus: ")
 	fmt.Scanln(&valik)
+	fmt.Println("******************************")
+
 	switch valik {
 	case "1":
 		lisaHarjumus()
@@ -38,12 +43,12 @@ func helloFunc() {
 	default:
 		fmt.Println("Vigane valik, proovi uuesti.")
 	}
-
 }
 
 func lisaHarjumus() {
 	var harjumuseNimi string
 	var harjumuseAeg string
+
 	fmt.Print("Sisestage harjumuse nimi: ")
 	fmt.Scanln(&harjumuseNimi)
 	fmt.Print("Sisestage harjumuse aeg: ")
@@ -53,7 +58,6 @@ func lisaHarjumus() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
 	tabel := `CREATE TABLE IF NOT EXISTS userdata (
@@ -71,19 +75,51 @@ func lisaHarjumus() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer statement.Close()
 
 	_, err = statement.Exec(harjumuseNimi, harjumuseAeg, false)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("******************************") //siin on 30 "*"
+
+	time.Sleep(time.Duration(time.Duration.Seconds(3)))
 	main()
 }
 
 func naitaHarjumusi() {
 
+	db, err := sql.Open("sqlite3", "userdata.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, harjumuseNimi, harjumuseAeg, harjumusTehtud FROM userdata")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	tabel := tablewriter.NewWriter(os.Stdout)
+	tabel.Header([]string{"ID", "Nimi", "Aeg", "Staatus"})
+
+	for rows.Next() {
+		var id, nimi, aeg, staatus string
+		rows.Scan(&id, &nimi, &aeg, &staatus)
+		tabel.Append([]string{
+			id,
+			nimi,
+			aeg,
+			staatus,
+		})
+	}
+
+	tabel.Render()
+
+	time.Sleep(time.Duration(time.Duration.Seconds(3)))
+	main()
 }
 
 func margiTehtuks() {
