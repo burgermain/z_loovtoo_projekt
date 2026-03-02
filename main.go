@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/olekukonko/tablewriter"
 )
 
-func helloFunc() {
+func tervitaja() {
 	var valik string
 	praeguneAeg := time.Now().Format("15:04:05")
 
-	fmt.Println("Teretulemast, minu harjumuste jälgiasse!")
+	fmt.Println("Tere tulemast, minu harjumuste jälgiasse!")
 	fmt.Println("Kell on", praeguneAeg)
 	fmt.Println("******************************")
 	fmt.Println("1. Lisa uus harjumus")
@@ -41,18 +42,19 @@ func helloFunc() {
 		fmt.Println("Head aega!")
 		return
 	default:
+		time.Sleep(500 * time.Millisecond)
 		fmt.Println("Vigane valik, proovi uuesti.")
+		fmt.Println("******************************")
+		time.Sleep(500 * time.Millisecond)
+		tervitaja()
 	}
 }
 
 func lisaHarjumus() {
 	var harjumuseNimi string
-	var harjumuseAeg string
 
 	fmt.Print("Sisestage harjumuse nimi: ")
 	fmt.Scanln(&harjumuseNimi)
-	fmt.Print("Sisestage harjumuse aeg: ")
-	fmt.Scanln(&harjumuseAeg)
 
 	db, err := sql.Open("sqlite3", "userdata.db")
 	if err != nil {
@@ -61,30 +63,35 @@ func lisaHarjumus() {
 	defer db.Close()
 
 	tabel := `CREATE TABLE IF NOT EXISTS userdata (
-			id INTEGER PRIMATY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			harjumuseNimi TEXT NOT NULL,
-			harjumuseAeg TEXT NOT NULL,
-			harjumusTehtud BOOL NOT NULL
+			harjumusTehtud BOOL NOT NULL,
+			harjumuseStriik INTEGER
 		);`
 	_, err = db.Exec(tabel)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi, harjumuseAeg, harjumusTehtud) VALUES (?, ?, ?)")
+	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi, harjumusTehtud) VALUES (?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(harjumuseNimi, harjumuseAeg, false)
+	_, err = statement.Exec(harjumuseNimi, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("******************************") //siin on 30 "*"
+	time.Sleep(1 * time.Second)
 
-	time.Sleep(time.Duration(time.Duration.Seconds(3)))
+	fmt.Println("Harjumus lisatud.")
+	fmt.Println("******************************") //siin on 30 "*"
+	fmt.Println()
+
+	time.Sleep(500 * time.Millisecond)
+
 	main()
 }
 
@@ -96,29 +103,40 @@ func naitaHarjumusi() {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, harjumuseNimi, harjumuseAeg, harjumusTehtud FROM userdata")
+	rows, err := db.Query("SELECT id, harjumuseNimi, harjumusTehtud, harjumuseStriik FROM userdata")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
 	tabel := tablewriter.NewWriter(os.Stdout)
-	tabel.Header([]string{"ID", "Nimi", "Aeg", "Staatus"})
+	tabel.Header([]string{"ID", "Nimi", "Striik", "Staatus"})
 
 	for rows.Next() {
-		var id, nimi, aeg, staatus string
-		rows.Scan(&id, &nimi, &aeg, &staatus)
+		var idString, nimi, staatusString, striikString string
+		var id, striik int64
+		var staatus bool
+		rows.Scan(&id, &nimi, &striik, &staatus)
+		idString = strconv.FormatInt(id, 10)
+		striikString = strconv.FormatInt(striik, 10) + "🔥"
+		if staatus {
+			staatusString = "✅"
+		}
+		if !staatus {
+			staatusString = "❎"
+		}
 		tabel.Append([]string{
-			id,
+			idString,
 			nimi,
-			aeg,
-			staatus,
+			striikString,
+			staatusString,
 		})
 	}
 
 	tabel.Render()
 
-	time.Sleep(time.Duration(time.Duration.Seconds(3)))
+	fmt.Println("Vajutage 'Enter', et tabel sulgeda.")
+	fmt.Scanln()
 	main()
 }
 
@@ -127,5 +145,5 @@ func margiTehtuks() {
 }
 
 func main() {
-	helloFunc()
+	tervitaja()
 }
