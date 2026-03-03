@@ -52,6 +52,9 @@ func tervitaja() {
 
 func lisaHarjumus() {
 	var harjumuseNimi string
+	var praeguneAeg string
+
+	praeguneAeg = time.Now().String()
 
 	fmt.Print("Sisestage harjumuse nimi: ")
 	fmt.Scanln(&harjumuseNimi)
@@ -66,20 +69,21 @@ func lisaHarjumus() {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			harjumuseNimi TEXT NOT NULL,
 			harjumusTehtud BOOL NOT NULL,
-			harjumuseStriik INTEGER
+			harjumuseStriik INTEGER,
+			lisamisAeg TEXT NOT NULL
 		);`
 	_, err = db.Exec(tabel)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi, harjumusTehtud) VALUES (?, ?)")
+	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi, harjumusTehtud, lisamisAeg) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(harjumuseNimi, false)
+	_, err = statement.Exec(harjumuseNimi, false, praeguneAeg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +96,7 @@ func lisaHarjumus() {
 
 	time.Sleep(500 * time.Millisecond)
 
-	main()
+	tervitaja()
 }
 
 func naitaHarjumusi() {
@@ -137,11 +141,43 @@ func naitaHarjumusi() {
 
 	fmt.Println("Vajutage 'Enter', et tabel sulgeda.")
 	fmt.Scanln()
-	main()
+	tervitaja()
 }
 
 func margiTehtuks() {
-	fmt.Println("3")
+	var valik string
+	var striik int64
+
+	fmt.Print("Sisestage harjumuse ID: ")
+	fmt.Scanln(&valik)
+	fmt.Println("******************************")
+
+	db, err := sql.Open("sqlite3", "userdata.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT harjumuseStriik FROM userdata")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	rows.Scan(&striik)
+	striik += 1
+
+	query := ("UPDATE userdata SET harjumusTehtud = ?, harjumuseStriik = ? WHERE id = ?;")
+
+	db.Exec(query, true, striik, valik)
+
+	time.Sleep(1 * time.Second)
+	fmt.Println("Harjumus uuendatud.")
+	fmt.Println("******************************")
+	fmt.Println()
+	time.Sleep(500 * time.Millisecond)
+
+	tervitaja()
 }
 
 func main() {
