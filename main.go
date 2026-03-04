@@ -68,22 +68,23 @@ func lisaHarjumus() {
 	tabel := `CREATE TABLE IF NOT EXISTS userdata (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			harjumuseNimi TEXT NOT NULL,
-			harjumusTehtud BOOL NOT NULL,
-			harjumuseStriik INTEGER,
-			lisamisAeg TEXT NOT NULL
+			harjumusTehtud INTEGER DEFAULT 0,
+			harjumuseStriik INTEGER DEFAULT 0,
+			viimatiTehtud DATE,
+			viimatiResetitud DATE
 		);`
 	_, err = db.Exec(tabel)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi, harjumusTehtud, lisamisAeg) VALUES (?, ?, ?)")
+	statement, err := db.Prepare("INSERT INTO userdata (harjumuseNimi) VALUES (?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(harjumuseNimi, false, praeguneAeg)
+	_, err = statement.Exec(harjumuseNimi)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -169,7 +170,7 @@ func margiTehtuks() {
 
 	query := ("UPDATE userdata SET harjumusTehtud = ?, harjumuseStriik = ? WHERE id = ?;")
 
-	db.Exec(query, true, striik, valik)
+	db.Exec(query, 1, striik, valik)
 
 	time.Sleep(1 * time.Second)
 	fmt.Println("Harjumus uuendatud.")
@@ -178,6 +179,30 @@ func margiTehtuks() {
 	time.Sleep(500 * time.Millisecond)
 
 	tervitaja()
+}
+
+func harjumusteResetija(tana time.Time) error {
+	tanaString := tana.Format("2006-01-02")
+
+	db, err := sql.Open("sqlite3", "userdata.db")
+	defer db.Close
+
+	_, err = db.Exec(`
+		UPDATE userdata
+		SET harjumusTehtud = 0
+			viimatiResetitud = ?
+		WHERE viimatiResetitud IS NULL
+			OR viimatiResetitud != ?
+		`, tanaString, tanaString)
+
+	return err
+}
+
+func striikideResetija(tana time.Time) error {
+	kaksPaevaTagasi := tana.AddDate(0, 0, -2).Format("2006-01-02")
+
+	
+
 }
 
 func main() {
