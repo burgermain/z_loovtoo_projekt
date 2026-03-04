@@ -92,7 +92,7 @@ func lisaHarjumus() {
 	time.Sleep(1 * time.Second)
 
 	fmt.Println("Harjumus lisatud.")
-	fmt.Println("******************************") //siin on 30 "*"
+	fmt.Println("******************************") // siin on 30 "*"
 	fmt.Println()
 
 	time.Sleep(500 * time.Millisecond)
@@ -101,7 +101,6 @@ func lisaHarjumus() {
 }
 
 func naitaHarjumusi() {
-
 	db, err := sql.Open("sqlite3", "userdata.db")
 	if err != nil {
 		log.Fatal(err)
@@ -185,7 +184,7 @@ func harjumusteResetija(tana time.Time) error {
 	tanaString := tana.Format("2006-01-02")
 
 	db, err := sql.Open("sqlite3", "userdata.db")
-	defer db.Close
+	defer db.Close()
 
 	_, err = db.Exec(`
 		UPDATE userdata
@@ -200,9 +199,6 @@ func harjumusteResetija(tana time.Time) error {
 
 func striikideResetija(tana time.Time) error {
 	kaksPaevaTagasi := tana.AddDate(0, 0, -2).Format("2006-01-02")
-
-	
-
 }
 
 func main() {
