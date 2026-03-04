@@ -52,9 +52,6 @@ func tervitaja() {
 
 func lisaHarjumus() {
 	var harjumuseNimi string
-	var praeguneAeg string
-
-	praeguneAeg = time.Now().String()
 
 	fmt.Print("Sisestage harjumuse nimi: ")
 	fmt.Scanln(&harjumuseNimi)
