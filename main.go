@@ -88,6 +88,8 @@ func lisaHarjumus() {
 
 	time.Sleep(1 * time.Second)
 
+	fmt.Println()
+	fmt.Println("******************************")
 	fmt.Println("Harjumus lisatud.")
 	fmt.Println("******************************") // siin on 30 "*"
 	fmt.Println()
@@ -147,7 +149,6 @@ func margiTehtuks() {
 
 	fmt.Print("Sisestage harjumuse ID: ")
 	fmt.Scanln(&valik)
-	fmt.Println("******************************")
 
 	db, err := sql.Open("sqlite3", "userdata.db")
 	if err != nil {
@@ -169,6 +170,9 @@ func margiTehtuks() {
 	db.Exec(query, 1, striik, valik)
 
 	time.Sleep(1 * time.Second)
+
+	fmt.Println()
+	fmt.Println("******************************")
 	fmt.Println("Harjumus uuendatud.")
 	fmt.Println("******************************")
 	fmt.Println()
