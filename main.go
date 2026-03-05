@@ -181,6 +181,9 @@ func harjumusteResetija(tana time.Time) error {
 	tanaString := tana.Format("2006-01-02")
 
 	db, err := sql.Open("sqlite3", "userdata.db")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
 
 	_, err = db.Exec(`
@@ -196,8 +199,37 @@ func harjumusteResetija(tana time.Time) error {
 
 func striikideResetija(tana time.Time) error {
 	kaksPaevaTagasi := tana.AddDate(0, 0, -2).Format("2006-01-02")
+
+	db, err := sql.Open("sqlite3", "userdata.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+		UPDATE userdata
+		SET harjumuseStriik = 0
+		WHERE harjumusTehtud = 0
+			AND (viimatiTehtud IS NULL OR viimatiTehtud < ?)
+		`, kaksPaevaTagasi)
+
+	return err
+}
+
+func dailyMaintenance() error {
+	tana := time.Now().Truncate(24 * time.Hour)
+
+	if err := harjumusteResetija(tana); err != nil {
+		return fmt.Errorf("harjumuste resetija: %w", err)
+	}
+	if err := striikideResetija(tana); err != nil {
+		return fmt.Errorf("striikide resetija: %w", err)
+	}
+
+	return nil
 }
 
 func main() {
+	dailyMaintenance()
 	tervitaja()
 }
