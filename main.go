@@ -148,6 +148,8 @@ func naitaHarjumusi() {
 func margiTehtuks() {
 	var valik string
 	var striik int64
+	tana := time.Now().Truncate(24 * time.Hour)
+	tanaString := tana.Format("2006-01-02")
 
 	fmt.Print("Sisestage harjumuse ID: ")
 	fmt.Scanln(&valik)
@@ -158,7 +160,7 @@ func margiTehtuks() {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT harjumuseStriik FROM userdata")
+	rows, err := db.Query("SELECT harjumuseStriik, viimatiTehtud FROM userdata")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -167,9 +169,9 @@ func margiTehtuks() {
 	rows.Scan(&striik)
 	striik += 1
 
-	query := ("UPDATE userdata SET harjumusTehtud = ?, harjumuseStriik = ? WHERE id = ?;")
+	query := ("UPDATE userdata SET harjumusTehtud = ?, harjumuseStriik = ?, viimatiTehtud = ? WHERE id = ?;")
 
-	db.Exec(query, 1, striik, valik)
+	db.Exec(query, 1, striik, tanaString, valik)
 
 	time.Sleep(1 * time.Second)
 
